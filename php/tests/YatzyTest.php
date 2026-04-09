@@ -6,72 +6,151 @@ namespace Yatzy\Tests;
 
 use PHPUnit\Framework\TestCase;
 use Yatzy\Yatzy;
+use Yatzy\Thesaurus;
+use Yatzy\LeagueTable;
 
 class YatzyTest extends TestCase
 {
+
+    public function test_league_tbl()
+    {
+        $table = new LeagueTable(array('Mike', 'Harry','Chris', 'Arnold'));
+        $table->recordResult('Mike', 2);
+        $table->recordResult('Mike', 3);
+        $table->recordResult('Arnold', 5);
+        $table->recordResult('Chris', 5);
+
+        $table->recordResult('Harry', 4);
+
+         self::assertSame('Chris', $table->playerRank(1));
+    }
+
+    public function test_thesaurus()
+    {
+
+        $thesaurus = new Thesaurus(
+            [
+                "buy" => array("purchase"),
+                "big" => array("great", "large")
+            ]
+        );
+
+        $synonyms = $thesaurus->getSynonyms("big");
+
+        $result = [
+            'word'     => "big",
+            'synonyms' => ["great", "large"],
+        ];
+        self::assertSame($synonyms, json_encode($result));
+
+        $synonyms = $thesaurus->getSynonyms("agelast");
+        $result = [
+            'word'     => "agelast",
+            'synonyms' => [],
+        ];
+        self::assertSame($synonyms, json_encode($result));
+    }
+
     public function test_chance_scores_sum_of_all_dice(): void
     {
         $expected = 15;
-        $actual = Yatzy::chance(2, 3, 4, 5, 1);
+        $yatzy = new Yatzy(2, 3, 4, 5, 1);
+        $actual = $yatzy->chance();
         self::assertSame($expected, $actual);
-        self::assertSame(16, Yatzy::chance(3, 3, 4, 5, 1));
+        $yatzy->setDice(3, 3, 4, 5, 1);
+        self::assertSame(16, $yatzy->chance());
     }
 
     public function test_yatzy_scores_50(): void
     {
         $expected = 50;
-        $actual = Yatzy::yatzyScore([4, 4, 4, 4, 4]);
+        $yatzy = new Yatzy(4, 4, 4, 4, 4);
+        $actual = $yatzy->yatzyScore();
         self::assertSame($expected, $actual);
-        self::assertSame(50, Yatzy::yatzyScore([6, 6, 6, 6, 6]));
-        self::assertSame(0, Yatzy::yatzyScore([6, 6, 6, 6, 3]));
+
+        $yatzy->setDice(6, 6, 6, 6, 6);
+        self::assertSame(50, $yatzy->yatzyScore());
+        $yatzy->setDice(6, 6, 6, 3, 6);
+        self::assertSame(0, $yatzy->yatzyScore());
     }
 
-    public function test_1s(): void
+    public function test_if_theres_one_return_num_occurrences(): void
     {
-        self::assertSame(1, Yatzy::ones(1, 2, 3, 4, 5));
-        self::assertSame(2, Yatzy::ones(1, 2, 1, 4, 5));
-        self::assertSame(0, Yatzy::ones(6, 2, 2, 4, 5));
-        self::assertSame(4, Yatzy::ones(1, 2, 1, 1, 1));
+        $yatzy = new Yatzy(1, 2, 3, 4, 5);
+        self::assertSame(1, $yatzy->getUpperSection(1));
+        $yatzy->setDice(1, 2, 1, 4, 5);
+        self::assertSame(2, $yatzy->getUpperSection(1));
+        $yatzy->setDice(6, 2, 2, 4, 5);
+        self::assertSame(0, $yatzy->getUpperSection(1));
+        $yatzy->setDice(1, 2, 1, 1, 1);
+        self::assertSame(4, $yatzy->getUpperSection(1));
     }
 
-    public function test_2s(): void
+    public function test_if_theres_two_return_num_occurrences(): void
     {
-        self::assertSame(4, Yatzy::twos(1, 2, 3, 2, 6));
-        self::assertSame(10, Yatzy::twos(2, 2, 2, 2, 2));
+        $yatzy = new Yatzy(1, 2, 3, 2, 6);
+        self::assertSame(4, $yatzy->getUpperSection(2));
+
+        $yatzy->setDice(2, 2, 2, 2, 2);
+        self::assertSame(10, $yatzy->getUpperSection(2));
     }
 
-    public function test_threes(): void
+    public function test_if_theres_three_return_num_occurrences(): void
     {
-        self::assertSame(6, Yatzy::threes(1, 2, 3, 2, 3));
-        self::assertSame(12, Yatzy::threes(2, 3, 3, 3, 3));
+        $yatzy = new Yatzy(1, 2, 3, 2, 3);
+        self::assertSame(6, $yatzy->getUpperSection(3));
+
+        $yatzy->setDice(2, 3, 3, 3, 3);
+        self::assertSame(12, $yatzy->getUpperSection(3));
     }
 
-    public function test_fours_test(): void
+    public function test_if_theres_fours_return_num_occurrences(): void
     {
-        self::assertSame(12, (new Yatzy(4, 4, 4, 5, 5))->fours());
-        self::assertSame(8, (new Yatzy(4, 4, 5, 5, 5))->fours());
-        self::assertSame(4, (new Yatzy(4, 5, 5, 5, 5))->fours());
+        $yatzy = new Yatzy(4, 4, 4, 5, 5);
+
+        self::assertSame(12, $yatzy->getUpperSection(4));
+
+        $yatzy->setDice(4, 4, 5, 5, 5);
+        self::assertSame(8, $yatzy->getUpperSection(4));
+
+        $yatzy->setDice(4, 5, 5, 5, 5);
+        self::assertSame(4, $yatzy->getUpperSection(4));
     }
 
-    public function test_fives(): void
+    public function test_if_theres_fives_return_num_occurrences(): void
     {
-        self::assertSame(10, (new Yatzy(4, 4, 4, 5, 5))->Fives());
-        self::assertSame(15, (new Yatzy(4, 4, 5, 5, 5))->Fives());
-        self::assertSame(20, (new Yatzy(4, 5, 5, 5, 5))->Fives());
+        $yatzy = new Yatzy(4, 4, 4, 5, 5);
+
+        self::assertSame(10, $yatzy->getUpperSection(5));
+
+        $yatzy->setDice(4, 4, 5, 5, 5);
+        self::assertSame(15, $yatzy->getUpperSection(5));
+
+        $yatzy->setDice(4, 5, 5, 5, 5);
+        self::assertSame(20, $yatzy->getUpperSection(5));
     }
 
-    public function sixes_test(): void
+    public function test_if_theres_sixes_return_num_occurrences(): void
     {
-        self::assertSame(0, (new Yatzy(4, 4, 4, 5, 5))->sixes());
-        self::assertSame(6, (new Yatzy(4, 4, 6, 5, 5))->sixes());
-        self::assertSame(18, (new Yatzy(6, 5, 6, 6, 5))->sixes());
+        $yatzy = new Yatzy(4, 4, 4, 5, 5);
+
+        self::assertSame(0, $yatzy->getUpperSection(6));
+        $yatzy->setDice(4, 4, 6, 5, 5);
+        self::assertSame(6, $yatzy->getUpperSection(6));
+        $yatzy->setDice(6, 5, 6, 6, 5);
+        self::assertSame(18, $yatzy->getUpperSection(6));
     }
 
-    public function test_one_pair(): void
+    public function test_if_we_have_one_pair_get_sum_of_that_pair(): void
     {
-        self::assertSame(6,  (new Yatzy(3, 4, 3, 5, 6))->score_pair(3, 4, 3, 5, 6));
-        self::assertSame(10, (new Yatzy(5, 3, 3, 3, 5))->score_pair(5, 3, 3, 3, 5));
-        self::assertSame(12, (new Yatzy(5, 3, 6, 6, 5))->score_pair(5, 3, 6, 6, 5));
+        $yatzy = new Yatzy(3, 4, 3, 5, 6);
+
+        self::assertSame(6, $yatzy->score_pair());
+        $yatzy->setDice(5, 3, 3, 3, 5);
+        self::assertSame(10, $yatzy->score_pair());
+
+        $yatzy->setDice(5, 3, 6, 6, 5);
+        self::assertSame(12, $yatzy->score_pair());
     }
 
     public function test_two_Pair(): void
