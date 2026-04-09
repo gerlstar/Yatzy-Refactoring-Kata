@@ -32,6 +32,9 @@ class LeagueTable
 
         // Sort standings by: score DESC, games_played ASC, index ASC
         uasort($this->standings, function ($a, $b) {
+            // compare whoever has highest score (descending)
+            // then compare whoever has least games_played (ascending)
+            // then compare whoever has appeared earlier (index ascending)
             return
                 [$b['score'], $a['games_played'], $a['index']]
                 <=>
