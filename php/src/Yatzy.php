@@ -6,141 +6,117 @@ namespace Yatzy;
 
 class Yatzy
 {
+    private const  YAHTZEE_SCORE = 50;
     /**
      * @var array<int, int>
      */
     private array $dice;
 
-    public static function chance(int $d1, int $d2, int $d3, int $d4, int $d5): int
+    public function __construct(int $d1, int $d2, int $d3, int $d4, int $d5)
     {
-        $total = 0;
-        $total += $d1;
-        $total += $d2;
-        $total += $d3;
-        $total += $d4;
-        $total += $d5;
-        return $total;
+        $this->setDice($d1, $d2, $d3, $d4, $d5);
     }
 
-    /**
-     * @param array<int, int> $dice
-     */
-    public static function yatzyScore(array $dice): int
+
+
+    public static function canTravelTo(array $gameMatrix, int $fromRow, int $fromColumn, 
+                        int $toRow, int $toColumn) : bool
     {
-        $counts = array_fill(0, 6, 0);
-        foreach ($dice as $die) {
-            $counts[$die - 1] += 1;
-        }
-        foreach (range(0, count($counts) - 1) as $i) {
-            if ($counts[$i] == 5)
-                return 50;
-        }
-        return 0;
+        // var_dump();
+        $first = $gameMatrix[count($gameMatrix)-1];
+        // var_dump($first[$fromRow-1]);
+        
+        $s = $gameMatrix[count($gameMatrix)-$toRow-1];
+        // var_dump($s);
+        $start = $s[$fromColumn];
+        // var_dump($start);
+        
+        //destination
+         $first = $gameMatrix[count($gameMatrix)-1];
+        // var_dump($first[$toRow-1]);
+
+        $destination =$s[$toColumn-1];
+        
+        // $s = $gameMatrix[count($gameMatrix)-$toRow-1];
+        // // var_dump($s);
+        // $start = $s[$toRow];
+        // var_dump($start);
+        // $end = $s[$toColumn];
+        // var_dump('end:', $end);
+        
+        return false;
     }
 
-    public static function ones(int $d1, int $d2, int $d3, int $d4, int $d5): int
-    {
-        $sum = 0;
-        if ($d1 == 1)
-            $sum += 1;
-        if ($d2 == 1)
-            $sum += 1;
-        if ($d3 == 1)
-            $sum += 1;
-        if ($d4 == 1)
-            $sum += 1;
-        if ($d5 == 1)
-            $sum += 1;
 
-        return $sum;
+
+    public function chance(): int
+    {
+        return array_reduce($this->dice, function ($sum, $item) {
+            $sum += $item;
+            return $sum;
+        }, 0);
     }
 
-    public static function twos(int $d1, int $d2, int $d3, int $d4, int $d5): int
-    {
-        $sum = 0;
-        if ($d1 == 2)
-            $sum += 2;
-        if ($d2 == 2)
-            $sum += 2;
-        if ($d3 == 2)
-            $sum += 2;
-        if ($d4 == 2)
-            $sum += 2;
-        if ($d5 == 2)
-            $sum += 2;
-
-        return $sum;
-    }
-
-    public static function threes(int $d1, int $d2, int $d3, int $d4, int $d5): int
-    {
-        $s = 0;
-        if ($d1 == 3)
-            $s += 3;
-        if ($d2 == 3)
-            $s += 3;
-        if ($d3 == 3)
-            $s += 3;
-        if ($d4 == 3)
-            $s += 3;
-        if ($d5 == 3)
-            $s += 3;
-
-        return $s;
-    }
-
-    public function __construct(int $d1, int $d2, int $d3, int $d4, int $_5)
+    public function setDice(int $d1, int $d2, int $d3, int $d4, int $d5): void
     {
         $this->dice = array_fill(0, 5, 0);
         $this->dice[0] = $d1;
         $this->dice[1] = $d2;
         $this->dice[2] = $d3;
         $this->dice[3] = $d4;
-        $this->dice[4] = $_5;
+        $this->dice[4] = $d5;
     }
 
-    public function fours(): int
+
+    /**
+     * @param array<int, int> $dice
+     */
+    public function yatzyScore(): int
     {
-        $sum = 0;
-        for ($at = 0; $at != 5; $at++) {
-            if ($this->dice[$at] == 4) {
-                $sum += 4;
+        $die = $this->dice[0];
+        for ($i = 1; $i <= 4; $i++) {
+            if ($this->dice[$i] != $die) {
+                return 0;
             }
         }
-        return $sum;
+        return self::YAHTZEE_SCORE;
     }
 
-    public function Fives(): int
+    private function getNumOccurence(int $num): int
     {
-        $s = 0;
-        $i = 0;
-        for ($i = 0; $i < 5; $i++)
-            if ($this->dice[$i] == 5)
-                $s = $s + 5;
-        return $s;
+        return count(array_filter($this->dice, function ($v, $k) use ($num) {
+            return $v == $num;
+        }, ARRAY_FILTER_USE_BOTH));
     }
 
-    public function sixes(): int
+    public  function getUpperSection(int $num): int
     {
-        $sum = 0;
-        for ($at = 0; $at < 5; $at++)
-            if ($this->dice[$at] == 6)
-                $sum = $sum + 6;
-        return $sum;
+        return $this->getNumOccurence($num) * $num;
     }
 
-    public function score_pair(int $d1, int $d2, int $d3, int $d4, int $d5): int
+
+    public function score_pair(): int
     {
-        $counts = array_fill(0, 6, 0);
-        $counts[$d1 - 1] += 1;
-        $counts[$d2 - 1] += 1;
-        $counts[$d3 - 1] += 1;
-        $counts[$d4 - 1] += 1;
-        $counts[$d5 - 1] += 1;
-        for ($at = 0; $at != 6; $at++)
-            if ($counts[6 - $at - 1] == 2)
-                return (6 - $at) * 2;
-        return 0;
+        $map = [];
+        foreach ($this->dice as $n) {
+            if (!isset($map[$n])) {
+                $map[$n] = 0;
+            }
+            $map[$n]++;
+        }
+
+        $filtered = array_filter($map, function ($val, $key) {
+            return $val == 2;
+        }, ARRAY_FILTER_USE_BOTH);
+
+        if (count($filtered) > 1) {
+            // if there are more than 1 2-pair, lets get the 
+            //biggest one and just double it.
+            return max(array_keys($filtered)) * 2;
+        } else {
+            $firstPair = array_keys($filtered);
+            return current($firstPair) * 2;
+        }
     }
 
     public static function two_pair(int $d1, int $d2, int $d3, int $d4, int $d5): int
@@ -187,11 +163,13 @@ class Yatzy
         $tallies[$d3 - 1] += 1;
         $tallies[$d4 - 1] += 1;
         $tallies[$d5 - 1] += 1;
-        if ($tallies[0] == 1 &&
+        if (
+            $tallies[0] == 1 &&
             $tallies[1] == 1 &&
             $tallies[2] == 1 &&
             $tallies[3] == 1 &&
-            $tallies[4] == 1)
+            $tallies[4] == 1
+        )
             return 15;
         return 0;
     }
@@ -204,11 +182,13 @@ class Yatzy
         $tallies[$d3 - 1] += 1;
         $tallies[$d4 - 1] += 1;
         $tallies[$d5 - 1] += 1;
-        if ($tallies[1] == 1 &&
+        if (
+            $tallies[1] == 1 &&
             $tallies[2] == 1 &&
             $tallies[3] == 1 &&
             $tallies[4] == 1 &&
-            $tallies[5] == 1)
+            $tallies[5] == 1
+        )
             return 20;
         return 0;
     }
